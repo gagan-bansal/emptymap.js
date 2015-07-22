@@ -1,0 +1,41 @@
+{
+  "name": "emptymap.js",
+  "version": "0.0.0",
+  "description": "Map framework that help in navigation like pan and zoom, but does nothing itself.",
+  "main": "emptymap.js",
+  "scripts": {
+    "test": "mocha test/test.js",
+    "build-debug": "browserify emptymap.js --debug --standalone EmptyMap | exorcist dist/emptymap.js.map > dist/emptymap.js",
+    "build-min": "browserify emptymap.js --standalone EmptyMap | uglifyjs -c -m > dist/emptymap.min.js",
+    "build": "npm run build-debug && npm run build-min"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gagan-bansal/emptymap.js"
+  },
+  "keywords": [
+    "maps",
+    "framework",
+    "svg",
+    "vector",
+    "tiles",
+    "spherical mercator",
+    "web mercator"
+  ],
+  "author": "Gagan Bansal <gaganbansal123@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gagan-bansal/emptymap.js/issues"
+  },
+  "homepage": "https://github.com/gagan-bansal/emptymap.js",
+  "devDependencies": {
+    "browserify": "^8.1.1",
+    "chai": "^1.10.0",
+    "exorcist": "^0.1.6",
+    "mocha": "^2.1.0",
+    "uglify-js": "^2.4.16"
+  },
+  "dependencies": {
+    "transformatrix": "^1.1.1"
+  }
+}
