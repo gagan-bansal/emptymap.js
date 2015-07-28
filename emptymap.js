@@ -20,24 +20,24 @@ var em = function(viewportSize,options) {
     this.setVeiw(this.opt.view,this.opt.callback,this.opt.scope);
 };
 
-//em.prototype.setView = function(view, cb, scope) {
 em.prototype.setView = function(params) {
   var view = params.view, 
     cb = params.callback,
     scope = params.scope || this;
   if (typeof(cb) !== 'function') {
-    throw new TypeError('cb is not function');
+    throw new TypeError('callback is not function');
   }
   if(view ) {
     view.center = view.center || [0,0];
-    view.scale = view.scale ? view.scale : view.zoom 
+    view.webScale = view.webScale ? view.webScale : view.resolution
+      ? this.maxRes/view.resolution : view.zoom
       ? Math.pow(2,view.zoom) : 1;
     view.rotation = view.rotation || 0;
   } else {
     cb.call(scope,new Error('view details are wrong'));
     return;
   }
-  this._setAt(view.center, view.scale, view.rotation);
+  this._setAt(view.center, view.webScale, view.rotation);
   cb.call(scope, null,{
     matrix: this.matrix.m,
     tileMatrix: this.tileMatrix.m,
@@ -50,7 +50,7 @@ em.prototype.applyDeltaMove = function(params) {
     cb = params.callback,
     scope = params.scope || this;
   if (typeof(cb) !== 'function') {
-    throw new TypeError('cb is not function');
+    throw new TypeError('callback is not function');
   }
   var basePx = this.matrix.inverse().transformPoint(deltaX,deltaY);
   var baseVPTopLeftPx = this.matrix.inverse().transformPoint(0,0);
@@ -66,17 +66,16 @@ em.prototype.applyDeltaMove = function(params) {
     tileMatrix: this.tileMatrix.m,
     map:this});
 };
-//em.prototype.applyDeltaScaleRotation = function(vpPx,factor, rot, cb, scope) {
+
 em.prototype.applyDeltaScaleRotation = function(params) {
-  //TODO vpPx to be renamed
-  var vpPx = params.position, 
+  var vpPx = params.position || [this.vpSize.width/2, this.vpSize.height/2], 
     factor = params.factor || 1,
     rot = params.rotation || 0,
     cb = params.callback,
     scope = params.scope || this,
     basePx, destBasePx;
   if (typeof(cb) !== 'function') {
-    throw new TypeError('cb is not function');
+    throw new TypeError('callback is not function');
   }
   basePx = this.matrix.inverse().transformPoint(vpPx[0],vpPx[1]),
   this.matrix.translate(basePx[0],basePx[1])
@@ -99,7 +98,7 @@ em.prototype.resetTileMatrix = function(params) {
   var cb = params.callback,
     scope = params.scope || this;
   if (typeof(cb) !== 'function') {
-    throw new TypeError('cb is not function');
+    throw new TypeError('callback is not function');
   }
   var rot = Math.atan2(this.tileMatrix.m[1],this.tileMatrix.m[0]);
   this.tileMatrix.reset();
@@ -111,21 +110,7 @@ em.prototype.resetTileMatrix = function(params) {
     tileMatrix: this.tileMatrix.m,
     map:this});
 };
- 
-em.prototype.vieportToLongLat = function(px) {
-  var basePx = this.matrix.inverse().transformPoint(px[0],px[1]);
-  return this._basePxToLongLat(basePx);
-};
 
-em.prototype.longLatToViewport = function(longLat) {
-  var basePx = this._longLatToBasePx(longLat);
-  return this.matrix.transformPoint(basePx[0],basePx[1]);
-};
-
-em.prototype.getExtent = function() {
-  return {
-  };
-}
 em.prototype.getCenter = function() {
   var ctrBasePx = this.matrix.inverse()
     .transformPoint(this.vpSize.width/2,this.vpSize.height/2);
@@ -134,14 +119,17 @@ em.prototype.getCenter = function() {
     this.projExt.top - ctrBasePx[1] * this.maxRes ];
 }
 em.prototype.getZoom = function() {
-  return Math.log(this.getScale()) / Math.log(2);
+  return Math.log(this._getWebScale()) / Math.log(2);
 };
 em.prototype.getNearestZoom = function() {
   return Math.round(this.getZoom());
 };
-em.prototype.getScale = function() {
+em.prototype._getWebScale = function() {
   var m = this.matrix.m;
   return Math.sqrt(m[0] * m[0] + m[1] * m[1])
+};
+em.prototype.getResolution = function() {
+  return this.maxRes/this._getWebScale();
 };
 em.prototype.getRotation = function() {
   var m = this.matrix.m;
@@ -151,16 +139,36 @@ em.prototype.getView = function() {
   return {
     center: this.getCenter(),
     zoom: this.getZoom(),
+    resolution: this.maxRes/this._getWebScale(),
     rotation: this.getRotation()
   };
 };
+em.prototype.getExtent = function() {
+  var inv = this.matrix.inverse();
+  return [
+    this._basePxToLongLat(inv.transformPoint(0,0)),
+    this._basePxToLongLat(inv.transformPoint(0,this.vpSize.height)),
+    this._basePxToLongLat(inv.transformPoint(
+      this.vpSize.width, 
+      this.vpSize.height)),
+    this._basePxToLongLat(inv.transformPoint(this.vpSize.width, 0))]
+};
 
-em.prototype._setAt = function(ctr, scale, rot) {
+em.prototype.toLongLat = function(px) {
+  var basePx = this.matrix.inverse().transformPoint(px[0],px[1]);
+  return this._basePxToLongLat(basePx);
+};
+em.prototype.toViewportPx = function(longLat) {
+  var basePx = this._longLatToBasePx(longLat);
+  return this.matrix.transformPoint(basePx[0],basePx[1]);
+};
+
+em.prototype._setAt = function(ctr, webScale, rot) {
   var basePx = this._longLatToBasePx(ctr);
   this.matrix.reset();
   this.matrix.translate(basePx[0],basePx[1])
     .rotate(Math.PI/180*rot)
-    .scale(scale,scale)
+    .scale(webScale,webScale)
     .translate(-basePx[0],-basePx[1]);
   var baseCenter = this.matrix.inverse()
     .transformPoint(this.vpSize.width/2,this.vpSize.height/2);
