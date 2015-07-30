@@ -1,7 +1,7 @@
 {
   "name": "emptymap.js",
   "version": "0.0.0",
-  "description": "A module that help in navigation of map like pan, zoom and rotation but does nothing itself.",
+  "description": "A module that helps in navigation of map like pan, zoom and rotation but does nothing itself.",
   "main": "emptymap.js",
   "scripts": {
     "test": "mocha test/test.js",
