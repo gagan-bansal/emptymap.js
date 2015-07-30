@@ -1,7 +1,6 @@
 var chai = require('chai'),
   Matrix = require('transformatrix'),
   expect = chai.expect,
-  chaiAsPromised = require("chai-as-promised"),
   EmptyMap = require('../emptymap.js');
   size = {width: 714, height: 400},
   view = {
@@ -15,7 +14,6 @@ var chai = require('chai'),
     bottom: -20037508.342789244,
     top: 20037508.342789244};
   precision = 1e-6;
-chai.use(chaiAsPromised);
 
 describe('Test diffrent operations on emptymap.js', function() {
   it('initiate emptymap.js object', function() {

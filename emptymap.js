@@ -4,7 +4,7 @@ var em = function(viewportSize,options) {
   if(!viewportSize) return;
   this.vpSize = viewportSize; 
   this.opt = options || {};
-  this.projExt = this.opt.projExt || {
+  this.projExt = this.opt.projExtent || {
     left: -20037508.342789244,
     right: 20037508.342789244,
     bottom: -20037508.342789244,
@@ -29,9 +29,9 @@ em.prototype.setView = function(params) {
   }
   if(view ) {
     view.center = view.center || [0,0];
-    view.webScale = view.webScale ? view.webScale : view.resolution
-      ? this.maxRes/view.resolution : view.zoom
-      ? Math.pow(2,view.zoom) : 1;
+    view.webScale = view.webScale ? view.webScale : view.zoom
+      ? Math.pow(2,view.zoom) : view.resolution
+      ? this.maxRes/view.resolution : 0,
     view.rotation = view.rotation || 0;
   } else {
     cb.call(scope,new Error('view details are wrong'));
