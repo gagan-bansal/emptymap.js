@@ -163,6 +163,18 @@ em.prototype.toViewportPx = function(longLat) {
   return this.matrix.transformPoint(basePx[0],basePx[1]);
 };
 
+em.prototype.getViewportBBox = function() {
+  var extent, xArray, yArray, left, right, top, bottom;
+  extent = this.getExtent();
+  xArray = extent.map(function(pt) {return pt[0];});
+  yArray = extent.map(function(pt) {return pt[1];});
+  left = Math.min.apply(this,xArray);
+  right = Math.max.apply(this,xArray);
+  bottom = Math.min.apply(this,yArray);
+  top = Math.max.apply(this,yArray);
+  return {left: left, right: right, bottom: bottom, top: top};
+};
+
 em.prototype._setAt = function(ctr, webScale, rot) {
   var basePx = this._longLatToBasePx(ctr);
   this.matrix.reset();

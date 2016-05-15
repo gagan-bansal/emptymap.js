@@ -143,7 +143,7 @@ describe('Test diffrent operations on emptymap.js', function() {
     expect(setView).to.have.property('resolution')
       .that.to.be.closeTo(9783.93962050256,precision);
   });
-  it('Get extend i.e.four viewport corners coordinates: .getExtent', function() {
+  it('Get extent i.e. four viewport corners coordinates: .getExtent', function() {
     var emap = new EmptyMap(size);
     emap.setView({
       view: view,
@@ -154,6 +154,39 @@ describe('Test diffrent operations on emptymap.js', function() {
       .that.to.have.length(4);
     expect(ext).to.be.deep.equal([[-12523217.265198885,7032146.9075497],[-13536125.22916656,3251922.9226311855],[-6788425.416087011,1443882.20694888],[-5775517.452119334,5224106.191867396]]);
   });
+
+  it('Get viewport BBox/MBR i.e. minimum bounding rectangle: .getViewportBBox',
+    function () {
+      var emap = new EmptyMap(size);
+      emap.setView({
+        view: view,
+        callback: function() {}});
+      expect(emap.getViewportBBox()).to.deep.equal({
+        left: -13536125.22916656,
+        right: -5775517.452119334,
+        bottom: 1443882.20694888,
+        top: 7032146.9075497 });
+     }
+  );
+   
+  it('when rotation is 0 both extent and bbox of viewport should be equal',
+    function () {   
+      var emap = new EmptyMap(size);
+      emap.setView({
+        view: {
+          "center":[-9655821.34064295,4238014.557249293],
+          "zoom":4,
+          "rotation": 0
+        },
+        callback: function() {}});
+      var extent = emap.getExtent();
+      var bbox = emap.getViewportBBox();
+      expect(bbox.left).to.be.equal(extent[0][0]);
+      expect(bbox.top).to.be.equal(extent[0][1]);
+      expect(bbox.bottom).to.be.equal(extent[2][1]);
+      expect(bbox.right).to.be.equal(extent[2][0]);
+    }
+  );
 
   it('convert viewport pixel to long lat: .toLongLat', function() {
     var emap = new EmptyMap(size);

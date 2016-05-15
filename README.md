@@ -103,8 +103,8 @@ view: {
 while state has following values:
 ```
 {
-  matrix: array of 6 tranformation coeficients for svg map
-  tileMatrix: array of 6 transformation coeficient for tile map
+  matrix: array of 6 transformation coefficients for svg map
+  tileMatrix: array of 6 transformation coefficient for tile map
   map: reference the map itself
 }
 ```
@@ -192,6 +192,18 @@ Return current map state object as:
 
 Returns viewport corner coordinates as an array of four x and y coordinates in projected coordinate system.
 
+**.getVewportBBox**
+
+Retruns viewport's BBox/MBR in projected coordinate system. Its different from map extent. Once map is rotated the viewport is not aligned to coordinate axis. Viewport's BBox should be aligned to coordinate axis. 
+
+```
+{
+  left: projeceted x,
+  right: projected x,
+  bottom: projected y,
+  top: projected y
+}
+``` 
 **.toLongLat([x,y])**
 
 Converts viewport pixel coordinates to maps projected coordinates ([x,y]).
