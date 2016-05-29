@@ -1,5 +1,5 @@
 # emptymap.js
-A module that help in navigation of map like pan, zoom and rotation but does nothing itself.
+A module that helps in navigation of map like pan, zoom and rotation but does nothing itself.
 
 emptymap.js takes advantage of CSS/SVG transform property. If you render your geojson data (spatial data) on HTML page in form of SVG then this module can easily help in pan, zoom and rotate the SVG map. On SVG drag, pinch and rotate this module calculate the transformation matrix value to be applied to SVG to take effect of the events. The module also calculate the transformation matrix for div that contains map tiles as img tag.  
 
@@ -21,42 +21,42 @@ var EmptyMap = require('emptymap.js');
   em;
 em = new EmptyMap(size); 
 //set the initial view
-em.setView({
-  view: veiw,
-  callback: function(err,result) {
-    if(err) {
-      console.log(err);
-      return;
-    }
-    //get SVG map layer (where id='svgmap')
-    var svgLayer = document.getElemetnById('svgmap');
-    svgLayer.setAttribute('transform', 'matrix('+result.matrix.join(', ')+')');
-    //get map tile layer (where id='tilemap')
-    var tileLayer = document.getElementById('tilemap');
-    tileLayer.style.transform = 'matrix('+ result.tileMatrix.join(',') + ')';
-    // and of course you need to load the tiles for this rotated view
+em.setView(veiw, function(err,state) {
+  // state has the transformation matrices
+  if(err) {
+    console.log(err);
+    return;
   }
+  //get SVG map layer (where id='svgmap')
+  var svgLayer = document.getElemetnById('svgmap');
+  svgLayer.setAttribute('transform', 'matrix('+state.matrix.join(', ')+')');
+  //get map tile layer (where id='tilemap')
+  var tileLayer = document.getElementById('tilemap');
+  tileLayer.style.transform = 'matrix('+ state.tileMatrix.join(',') + ')';
+  // and of course you need to load the tiles for this view
 });
 
 // now lets pinch and rotate the map
-em.applyDeltaScaleRotation({
-  position: [300, 200],
-  rotation: 30, // in degree clock wise positive 
-  factor: 2, // scale (pinch) factor
-  callback: function(err,result) {
+em.scaleRotate(
+  {
+    center: [300, 200],
+    rotation: 30, // in degree clock wise positive 
+    factor: 2, // scale (pinch) factor
+  },
+  function(err,state) {
     if(err) {
       console.log(err);
       return;
     }
     //get SVG map layer (where id='svgmap')
     var svgLayer = document.getElemetnById('svgmap');
-    svgLayer.setAttribute('transform', 'matrix('+result.matrix.join(', ')+')');
+    svgLayer.setAttribute('transform', 'matrix('+state.matrix.join(', ')+')');
     //get map tile layer (where id='tilemap')
     var tileLayer = document.getElementById('tilemap');
-    tileLayer.style.transform = 'matrix('+ result.tileMatrix.join(',') + ')';
-    // and of course you need to load the tiles for this rotated view
+    tileLayer.style.transform = 'matrix('+ state.tileMatrix.join(',') + ')';
+    // and again you need to load the tiles for the changed view
   }
-});
+);
 ```
 #### API
 
@@ -78,7 +78,7 @@ Creates emptymap.js instance with maps div's `viewportSize` and other `otpions`
 * view: initial map view i.e. center, zoom/resolution and rotation
 * callback: callback function that handle the matrix values after view is set
 
-`projExtent` projection extents default spherical mercator extent
+`projExtent` projection extent default spherical mercator extent
 ```
   projExt: { 
     left: number 
@@ -119,40 +119,41 @@ callback: function(error , state) {
   // map state can be set as
   //get SVG map layer (where id='svgmap')
   var svgLayer = document.getElemetnById('svgmap');
-  svgLayer.setAttribute('transform', 'matrix('+result.matrix.join(', ')+')');
+  svgLayer.setAttribute('transform', 'matrix('+state.matrix.join(', ')+')');
   //get map tile layer (where id='tilemap')
   var tileLayer = document.getElementById('tilemap');
-  tileLayer.style.transform = 'matrix('+ result.tileMatrix.join(',') + ')';
+  tileLayer.style.transform = 'matrix('+ state.tileMatrix.join(',') + ')';
 }
 ```
 
-**.setView(params)** 
+**.setView(view [, callback, scope])** 
 
-Sets a view to the map whereas params are:
+Sets a view to the map whereas parameters are:
 * view: as explained above
 * callback: callback function as explained in constructor 
 * scope: `this` for callback function
 
-**.applyDeltaMove(params)**
+**.move(delta [, callback, scope])**
 
-Pans the map by given viewport pixel values for x and y direction. `params` are:
-* deltaX: viewport pixels in x direction
-* deltaY: viewport pixels in y direction
+Pans the map by given viewport's delta pixel values for x and y direction. `parameters` are:
+* delta: {deltaX: number, deltaY: number}
+  * deltaX: viewport pixels in x direction
+  * deltaY: viewport pixels in y direction
 * callback: callback function as explained in constructor 
 * scope: `this` for callback function
 
-**.applyDeltaScaleRotation(params)**
+**.scaleRotate(params [, callback, scope])**
 
 Scale and rotate the map, `params` are:
-* position: [x, y] center position for scale/rotation on viewport in pixels. Default value is center of viewport.
+* center: [x, y] center position for scale/rotation on viewport in pixels. Default value is center of viewport.
 * factor: float scale factor to zoom in/out the map. Default is 1.
 * rotation: float in degrees, clockwise positive. This is delta rotation to be applied to the map. Default value is 0 degree.
 * callback: callback function as explained in constructor 
 * scope: `this` for callback function
 
-**.resetTileMatrix(params)**
+**.resetTileMatrix([callback, scope])**
 
-Reset tile map matrix so that only rotation transformation is applied, as scale and pan would be null for tile map. This function can be called after every transition/event pan, pinch (scale) and rotate. During transition/event tileMatrix can be applied to tile layer. Generally callback of this function should also check if tiles need to be loaded for current map state. `params` are:
+Reset tile map matrix so that only rotation transformation is applied, as scale and pan would be null for tile map. This function can be called after every transition/event pan, pinch (scale) and rotatation. During transition/event tileMatrix can be applied to tile layer. Generally callback of this function should also check if tiles need to be loaded for current map state.
 * callback: callback function as explained in constructor 
 * scope: `this` for callback function
 
@@ -190,7 +191,15 @@ Return current map state object as:
 
 **.getExtent**
 
-Returns viewport corner coordinates as an array of four x and y coordinates in projected coordinate system.
+Returns viewport corner coordinates as an object:
+```
+{
+  ul: upper left projected coordinates,
+  ll: lower left projected coordinates,
+  lr: lower right projected coordinates,
+  ur: upper right projected coordinates
+}
+```
 
 **.getVewportBBox**
 
@@ -216,15 +225,12 @@ Converts maps projected coordinates to viewport pixel coordinates ([x,y]).
 ````javascript
 var view = em.getView();
 view.rotation = 25;
-em.setView({
-  view: view,
-  callback: function(error, state) {
-    if(error) {
-      console.log(errro);
-      return;
-    }
-    // set matrices to  required layers
+em.setView(view,function(error, state) {
+  if(error) {
+    console.log(errro);
+    return;
   }
+  // set matrices to  required layers
 });
 ```
 
