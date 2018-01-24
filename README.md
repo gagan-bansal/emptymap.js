@@ -56,7 +56,7 @@ em.scaleRotate(
 
 #### API
 
-#####constructor(viewportSize [,options])
+**constructor(viewportSize [,options])**
 
 Creates emptymap.js instance with map div's `viewportSize` and other `options`
 
